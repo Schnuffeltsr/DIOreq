@@ -1,0 +1,27 @@
+
+Fixed canonical elements:
+{elements}
+
+Requirement identifier:
+{requirement_id}
+
+Requirement:
+{requirement_text}
+
+Return a single JSON object:
+{{
+  "relations": [
+    {{
+      "source": "canonical element",
+      "target": "canonical element",
+      "relation_type": "ENABLES|TRIGGERS|PREVENTS|MODIFIES|CONTROLS|PRODUCES|DEPENDS_ON",
+      "confidence": 0.90,
+      "source_frs": ["{requirement_id}"],
+      "supporting_excerpts": ["exact excerpt"],
+      "justification": "brief documentary explanation",
+      "cross_requirement": false
+    }}
+  ]
+}}
+
+Use confidence >= 0.75. Reject self-loops and unsupported relations.

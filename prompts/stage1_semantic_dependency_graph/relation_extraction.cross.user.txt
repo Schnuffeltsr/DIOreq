@@ -1,0 +1,38 @@
+
+Fixed canonical elements:
+{elements}
+
+Existing relations:
+{existing_relations}
+
+Currently disconnected elements:
+{disconnected_elements}
+
+Complete requirements document:
+{document_text}
+
+Find only cross-requirement directional dependencies jointly supported by
+different requirements.
+
+Inspect producer-consumer relations, shared authorization constraints,
+distributed prerequisites, events and downstream responses, state changes,
+and documented cross-module interactions.
+
+Return a single JSON object:
+{{
+  "relations": [
+    {{
+      "source": "canonical element",
+      "target": "canonical element",
+      "relation_type": "ENABLES|TRIGGERS|PREVENTS|MODIFIES|CONTROLS|PRODUCES|DEPENDS_ON",
+      "confidence": 0.80,
+      "source_frs": ["FR-A", "FR-B"],
+      "supporting_excerpts": ["exact excerpt A", "exact excerpt B"],
+      "justification": "joint documentary support",
+      "cross_requirement": true
+    }}
+  ]
+}}
+
+Disconnected elements are review priorities only. Do not connect an element
+unless the document supports the relation. Use confidence >= 0.60.

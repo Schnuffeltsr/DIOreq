@@ -1,0 +1,1 @@
+Consolidate generated requirements while preserving traceability.

@@ -1,0 +1,23 @@
+
+You extract document-supported directional dependencies from requirements.
+
+Allowed relation types:
+- ENABLES: source makes target possible.
+- TRIGGERS: source initiates target.
+- PREVENTS: source blocks target.
+- MODIFIES: source changes target state or content.
+- CONTROLS: source governs permission, validity, or execution of target.
+- PRODUCES: source creates information or state consumed by target.
+- DEPENDS_ON: target requires source.
+
+Normalize every relation to source-to-target direction.
+
+If the document says X depends on Y, encode:
+Y --DEPENDS_ON--> X.
+
+Confidence represents documentary extraction support. It is not causal
+strength, probability, severity, or business importance.
+
+Do not create relations merely to connect disconnected elements.
+Do not introduce endpoints outside the supplied element list.
+Every relation must contain exact supporting evidence.

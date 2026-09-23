@@ -1,0 +1,55 @@
+# ---- Build and run artefacts --------------------------------------------
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+
+results/
+_runner_test_out/
+_tmp/
+
+# Generated datasets. dataset_all.json and dataset_reference.json are the
+# exact datasets the paper's runs used and are tracked deliberately;
+# ad-hoc subsets are not.
+dataset_cctns.json
+
+# Local backups and scratch
+*.bak
+*.orig
+reference_backup_before_tag_cleanup/
+~$*
+
+# ---- Superseded working copies of the corpus ----------------------------
+# The corpus lives in DIOReq/Data and DIOReq/Referencedata. These two folders
+# are the earlier plain-text working copies they were assembled from.
+参考基准案例/
+测试数据/
+
+# ---- Excluded on purpose ------------------------------------------------
+# original_RQ1code.py and original_utils.py are a superseded prototype with a
+# different method (Bayesian network + ACE). They must not be committed: the
+# prototype contains a hard-coded API key.
+original_RQ1code.py
+original_utils.py
+
+# Manuscript drafts, figure exports and the tools that build them, so the
+# paper can be circulated separately from the code.
+*.docx
+*.pptx
+*.pdf
+*.tiff
+*.svg
+*.png
+*.xlsx
+chapter4.md
+ablation_data.csv
+md2docx.py
+omml.py
+insert_paper_sentences.py
+clean_reference_tags.py
+plot_*.py
+causalreq_ablation_*.py
+
+# ...except the .docx corpus itself.
+!DIOReq/Data/**/*.docx
+!DIOReq/Referencedata/**/*.docx

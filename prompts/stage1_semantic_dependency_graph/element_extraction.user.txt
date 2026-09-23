@@ -1,0 +1,24 @@
+
+Requirement identifier:
+{requirement_id}
+
+Requirement:
+{requirement_text}
+
+Return a single JSON object:
+{{
+  "elements": [
+    {{
+      "name": "canonical name",
+      "type": "FUNCTION|DATA|ACTOR|STATE|EVENT|CONSTRAINT",
+      "aliases": [],
+      "confidence": 0.90,
+      "source_fr": "{requirement_id}",
+      "supporting_excerpt": "exact excerpt",
+      "description": "brief documentary meaning"
+    }}
+  ]
+}}
+
+Use confidence >= 0.75. Return at most eight elements.
+Do not invent missing concepts.

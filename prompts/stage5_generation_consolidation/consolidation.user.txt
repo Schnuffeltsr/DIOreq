@@ -1,0 +1,53 @@
+
+Consolidate generated requirement candidates.
+
+Candidates:
+{candidates}
+
+Source document:
+{document_text}
+
+Configuration:
+- merge semantic duplicates: {merge}
+- refine wording: {refine}
+- remove duplicates: {deduplicate}
+- filter unsupported or out-of-scope candidates: {filtering}
+
+Return a single JSON object:
+{{
+  "candidates": [
+    {{
+      "source_candidate_ids": [],
+      "requirement": "The system shall ...",
+      "decision": "KEEP|DEMOTE|REMOVE",
+      "reason": "brief reason"
+    }}
+  ]
+}}
+
+Group candidates by affected source requirement, principal entity, gap type,
+and business-semantic similarity. Several candidates may be merged into one
+consolidated requirement; list every contributing identifier.
+
+Decide one of three outcomes per group:
+
+KEEP
+  A reviewable functional requirement inside the documented system boundary.
+  Merge complementary candidates and refine wording so the result is a
+  complete, testable requirement.
+
+DEMOTE
+  The content is valid engineering guidance but describes an implementation
+  detail, architecture choice, technology selection, or non-functional
+  constraint rather than required behavior. Demoted entries are retained
+  separately as design constraints and are excluded from the requirements
+  document.
+
+REMOVE
+  Discard the candidate because it duplicates an existing or previously
+  generated requirement; introduces an unsupported principal entity;
+  exceeds the documented system boundary; or lacks traceable source
+  evidence.
+
+Every input candidate identifier must appear in exactly one returned group,
+so that nothing is silently dropped.

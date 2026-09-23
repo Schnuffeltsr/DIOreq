@@ -1,0 +1,29 @@
+
+Inspect persistent, in-scope business entities for applicable lifecycle and
+management operations.
+
+Elements:
+{elements}
+
+Complete requirements:
+{document_text}
+
+Check only operations applicable to each entity:
+CREATE, READ, UPDATE, DELETE, AUTHORIZATION, AUDIT, VALIDATION,
+EXCEPTION_HANDLING.
+
+Return a single JSON object:
+{{
+  "findings": [
+    {{
+      "affected_element": "canonical entity",
+      "gap_type": "MISSING_CREATE|MISSING_READ|MISSING_UPDATE|MISSING_DELETE|MISSING_AUTHORIZATION|MISSING_AUDIT|MISSING_VALIDATION|MISSING_EXCEPTION_HANDLING",
+      "source_frs": [],
+      "supporting_excerpts": [],
+      "reason": "why the operation is applicable but under-specified"
+    }}
+  ]
+}}
+
+Do not assume that every entity requires every operation. Do not nominate
+operations outside the documented system boundary.

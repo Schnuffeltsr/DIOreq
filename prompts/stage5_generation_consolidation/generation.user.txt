@@ -1,0 +1,25 @@
+
+Generate one reviewable functional requirement from a validated diagnostic
+finding.
+
+Validated finding:
+{finding}
+
+Relevant source requirements:
+{source_requirements}
+
+Validated element names:
+{element_names}
+
+Return a single JSON object:
+{{
+  "requirement": "The system shall ..."
+}}
+
+Rules:
+- Express required behavior, not implementation.
+- Use only supplied actors, entities, functions, states, and constraints.
+- Preserve the documented system boundary.
+- Make the requirement testable and concise.
+- Do not invent policies, thresholds, responsibilities, or external systems.
+- Do not mention DPS, scores, prompts, graphs, or diagnostic machinery.

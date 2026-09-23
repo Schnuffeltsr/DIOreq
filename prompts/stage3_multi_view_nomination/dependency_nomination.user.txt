@@ -1,0 +1,29 @@
+
+You are reviewing a document-supported dependency region for potentially
+missing business obligations.
+
+Source element: {source}
+Target element: {target}
+Path: {path}
+Relation types: {relation_types}
+Applicable review patterns: {patterns}
+
+Source requirements:
+{source_requirements}
+
+Return a single JSON object:
+{{
+  "findings": [
+    {{
+      "gap_type": "one applicable review pattern",
+      "affected_element": "affected element",
+      "source_frs": ["source requirement identifier"],
+      "supporting_excerpts": ["exact excerpt"],
+      "reason": "why this obligation should be checked"
+    }}
+  ]
+}}
+
+Nominate a review finding only when the supplied document supports inspecting
+the obligation. Do not write the final supplementary requirement. Do not infer
+new actors, entities, policies, or system responsibilities.

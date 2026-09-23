@@ -1,0 +1,12 @@
+# DIOReq runtime dependencies.
+#
+# The method itself needs only networkx and an OpenAI-compatible client.
+# python-docx is used by build_dataset.py to read the .docx corpus; the
+# runners operate on the JSON datasets it produces.
+
+networkx>=3.0,<4
+openai>=1.30
+python-docx>=1.1
+
+# Python 3.10 or newer: the code uses PEP 604 unions (X | None) and
+# PEP 585 builtin generics (list[str]) in annotations.

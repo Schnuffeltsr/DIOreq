@@ -1,0 +1,30 @@
+
+Classify a disconnected requirement element.
+
+Element:
+{element}
+
+Type:
+{element_type}
+
+Source requirements:
+{source_requirements}
+
+Supporting excerpts:
+{supporting_excerpts}
+
+Complete document:
+{document_text}
+
+Return a single JSON object:
+{{
+  "label": "GENUINE_GAP|IMPLICIT_DEPENDENCY|OUT_OF_SCOPE|NOISE",
+  "gap_type": "MISSING_INTEGRATION or another concise type",
+  "reason": "classification reason",
+  "source_frs": [],
+  "supporting_excerpts": []
+}}
+
+GENUINE_GAP means an in-scope element lacks a documented integration.
+IMPLICIT_DEPENDENCY means the element is used but its connection is
+under-specified. OUT_OF_SCOPE and NOISE must not enter generation.

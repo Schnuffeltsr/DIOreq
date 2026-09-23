@@ -1,0 +1,200 @@
+Functional Requirement
+2. Functional Requirements
+2.1 User Account Management
+Requirement ID	Description
+FR-001	Users can create an account by providing a valid email address, password, and personal information.
+FR-002	Users can securely log in using their registered email and password.
+FR-003	Users can log out of their session at any time.
+FR-004	The system stores user account details, including contact information, payment preferences, and purchase history.
+Inputs:
+Email, password, first name, last name, phone number, billing/shipping address
+Outputs:
+Confirmation messages, error messages, updated account data
+2.2 Product Catalog and Inventory Management
+Requirement ID	Description
+FR-005	Products are displayed with title, price, description, category, image, and availability status.
+FR-006	Administrators can add, edit, or remove products from the inventory.
+FR-007	Products are categorized into predefined categories.
+FR-008	Inventory levels are tracked and automatically updated when items are added/removed from the cart or ordered.
+Inputs:
+Product name, price, description, image, category, quantity
+Outputs:
+Updated product listings, inventory reports, error messages
+2.3 Shopping Cart Functionality
+Requirement ID	Description
+FR-009	Users can add items to their shopping cart.
+FR-010	Users can view the contents of their cart, including item quantity, price, and total cost.
+FR-011	Users can modify quantities or remove items from the cart.
+FR-012	Cart contents are saved between sessions for authenticated users.
+Inputs:
+Product ID, quantity, modification commands
+Outputs:
+Updated cart display, error messages, confirmation messages
+2.4 Order Processing and Checkout
+Requirement ID	Description
+FR-013	Users can proceed to checkout after adding items to the cart.
+FR-014	Users must select a shipping address and payment method before completing the order.
+FR-015	The system generates a unique order ID and confirms the order via email.
+FR-016	After payment is processed, the system updates inventory and records the transaction.
+Inputs:
+Shipping address, payment method, payment confirmation
+Outputs:
+Order confirmation, receipt, email notification
+2.5 Plugin Extensibility
+Requirement ID	Description
+FR-017	The system provides an API for developers to extend its functionality through plugins.
+FR-018	Plugin documentation and specifications are provided for third-party development.
+FR-019	Plugins can be installed, configured, and managed by administrators.
+Inputs:
+Plugin files, configuration settings
+Outputs:
+Extended features, logs, error messages
+
+2.6 Account|Create Account|Valid Email Address Requirement
+Requirement: The system shall create an Account only when the User provides a valid email address, password, and all required personal information; otherwise, the system shall display an error message and shall not create or store the Account.
+Source requirements: FR-001, FR-004
+Evidence: Users can create an account by providing a valid email address, password, and personal information. | providing a valid email address, password, and personal information | Email, password, first name, last name, phone number, billing/shipping address | Confirmation messages, error messages, updated account data
+Diagnostic view: dependency|operation
+Gap type: MISSING_EXCEPTION_HANDLING|MISSING_PRECONDITION|MISSING_VALIDATION
+DPS: 0.9800
+
+2.7 Account|Store User Account Details|User Account Data
+Requirement: The system shall allow an authenticated User to update the contact information, password, addresses, and Payment Preferences associated with the User's Account. The system shall validate the submitted data, persist valid changes, and return the updated account data with a confirmation message; if validation or storage fails, it shall display an error message and leave the Account unchanged.
+Source requirements: FR-004
+Evidence: Outputs:
+Confirmation messages, error messages, updated account data | FR-004	The system stores user account details, including contact information, payment preferences, and purchase history. | Inputs:
+Email, password, first name, last name, phone number, billing/shipping address | The system stores user account details, including contact information, payment preferences, and purchase history. | updated account data
+Diagnostic view: dependency|operation
+Gap type: MISSING_CONSUMPTION|MISSING_PRODUCTION_FAILURE_HANDLING|MISSING_UPDATE|MISSING_VALIDATION
+DPS: 0.9200
+
+2.8 Account
+Requirement: The system shall permit access to an Account's contact information, Payment Preferences, and Purchase History only to the authenticated User associated with that Account.
+Source requirements: FR-002, FR-004
+Evidence: Users can securely log in using their registered email and password. | The system stores user account details, including contact information, payment preferences, and purchase history.
+Diagnostic view: operation
+Gap type: MISSING_AUTHORIZATION
+
+2.9 Payment Preferences
+Requirement: The system shall make an authenticated User's stored Payment Preferences available when the User selects a payment method during checkout.
+Source requirements: FR-004, FR-014
+Evidence: The system stores user account details, including contact information, payment preferences, and purchase history. | Users must select a shipping address and payment method before completing the order.
+Diagnostic view: isolation
+Gap type: UNDER_SPECIFIED_DATA_USAGE
+
+2.10 Manage Inventory Products
+Requirement: The system shall permit only an authenticated Administrator to add, edit, or remove Products from the Inventory.
+Source requirements: FR-006
+Evidence: Administrators can add, edit, or remove products from the inventory.
+Diagnostic view: dependency
+Gap type: MISSING_AUTHORIZATION
+DPS: 0.9500
+
+2.11 Product
+Requirement: The system shall reject an Administrator's attempt to add or edit a Product when required Product data is missing or invalid, or when the specified category is not one of the predefined Product Categories, and shall display an error message.
+Source requirements: FR-005, FR-006, FR-007
+Evidence: Administrators can add, edit, or remove products from the inventory. | Product name, price, description, image, category, quantity | Products are categorized into predefined categories.
+Diagnostic view: operation
+Gap type: MISSING_VALIDATION
+
+2.12 Inventory
+Requirement: The system shall validate Inventory Updates caused by Product administration, cart changes, or completed orders and shall prevent the Inventory Level of any Product from becoming negative, including when multiple updates occur concurrently.
+Source requirements: FR-006, FR-008, FR-016
+Evidence: Inventory levels are tracked and automatically updated when items are added/removed from the cart or ordered. | After payment is processed, the system updates inventory | quantity
+Diagnostic view: operation
+Gap type: MISSING_VALIDATION
+
+2.13 Shopping cart
+Requirement: After an item is added to, modified in, or removed from a Shopping Cart, the system shall update the cart display so that its Product IDs, quantities, prices, and total cost reflect the resulting cart contents; for an authenticated User, the same resulting contents shall be saved between sessions.
+Source requirements: FR-009, FR-012, FR-010, FR-011
+Evidence: Users can add items to their shopping cart. | Cart contents are saved between sessions for authenticated users. | Inputs:
+Product ID, quantity, modification commands | Outputs:
+Updated cart display, error messages, confirmation messages | Users can view the contents of their cart, including item quantity, price, and total cost. | Users can modify quantities or remove items from the cart.
+Diagnostic view: dependency
+Gap type: MISSING_CONSISTENCY_HANDLING
+DPS: 0.9800
+
+2.14 Shopping cart
+Requirement: After a User attempts to add, modify, or remove a Shopping Cart item, the system shall display the updated cart and a confirmation message if the operation succeeds, or an error message if it fails.
+Source requirements: FR-009, FR-011, FR-010, FR-013
+Evidence: Users can add items to their shopping cart. | Users can modify quantities or remove items from the cart. | Outputs:
+Updated cart display, error messages, confirmation messages | Users can view the contents of their cart, including item quantity, price, and total cost. | Users can proceed to checkout after adding items to the cart.
+Diagnostic view: dependency
+Gap type: MISSING_NOTIFICATION|MISSING_TRIGGERED_RESPONSE
+DPS: 0.9310
+
+2.15 Order|Proceed to checkout
+Requirement: The system shall use the current contents of the User's Shopping Cart during checkout and shall complete an Order only when the Cart contains at least one item, a shipping address and supported payment method have been selected, and payment confirmation has been received; the system shall assign a unique Order ID to the completed Order.
+Source requirements: FR-009, FR-013, FR-014, FR-015, FR-016
+Evidence: Users can add items to their shopping cart. | Users can proceed to checkout after adding items to the cart. | Users must select a shipping address and payment method before completing the order. | Shipping address, payment method, payment confirmation | The system generates a unique order ID
+Diagnostic view: dependency|operation
+Gap type: MISSING_CONSUMPTION|MISSING_VALIDATION
+DPS: 0.9212
+
+2.16 Cart
+Requirement: The system shall permit an authenticated User to add items to, view, modify, or remove items from only the Shopping Cart associated with that User's Account.
+Source requirements: FR-009, FR-010, FR-011, FR-012
+Evidence: Users can add items to their shopping cart. | Users can view the contents of their cart | Cart contents are saved between sessions for authenticated users.
+Diagnostic view: operation
+Gap type: MISSING_AUTHORIZATION
+
+2.17 Cart
+Requirement: The system shall reject a cart addition, quantity change, or removal when the Product is unknown or unavailable, the quantity is invalid or exceeds the available Inventory Level, or the modification command is malformed. For a rejected operation or persistence failure, the system shall display an error message, retain the Cart contents from before the failed operation, and not display a confirmation message.
+Source requirements: FR-009, FR-011, FR-010, FR-012
+Evidence: Users can add items to their shopping cart. | Users can modify quantities or remove items from the cart. | Product ID, quantity, modification commands | Updated cart display, error messages, confirmation messages
+Diagnostic view: operation
+Gap type: MISSING_EXCEPTION_HANDLING|MISSING_VALIDATION
+
+2.18 Confirm Order via Email|Order Confirmation|Receipt
+Requirement: After payment has been processed and the related Inventory Update and Transaction recording have succeeded, the system shall generate an Order Confirmation and Receipt for the Order and send the User an Email Notification containing the Order Confirmation.
+Source requirements: FR-015, FR-016
+Evidence: The system generates a unique order ID and confirms the order via email. | Outputs:
+Order confirmation, receipt, email notification | After payment is processed, the system updates inventory and records the transaction. | Inputs:
+Shipping address, payment method, payment confirmation | Outputs: Order confirmation, receipt, email notification
+Diagnostic view: dependency|isolation
+Gap type: MISSING_CONSUMPTION|MISSING_VALIDATION|UNDERSPECIFIED_OUTPUT_FLOW
+DPS: 0.9500
+
+2.19 Confirm Order via Email|Email Notification
+Requirement: The system shall report to the User when an Order Confirmation Email Notification cannot be generated or sent and shall not indicate that email confirmation succeeded unless the notification was successfully generated and sent.
+Source requirements: FR-015
+Evidence: The system generates a unique order ID and confirms the order via email.
+Diagnostic view: dependency
+Gap type: MISSING_PRODUCTION_FAILURE_HANDLING
+DPS: 0.9600
+
+2.20 Transaction
+Requirement: After payment is processed, the system shall record a Transaction and associate it with the corresponding Order, payment confirmation, and Inventory Update.
+Source requirements: FR-016
+Evidence: After payment is processed, the system updates inventory and records the transaction. | the transaction
+Diagnostic view: isolation
+Gap type: UNDER_SPECIFIED_DATA_DEPENDENCY
+
+2.21 Inventory|Order
+Requirement: The system shall not report an Order as successfully completed or issue its Order Confirmation and Receipt until the unique Order ID has been generated, Inventory has been successfully updated, and the Transaction has been recorded. If an Inventory Update or Transaction recording fails, the system shall display an error message and shall not issue successful completion outputs.
+Source requirements: FR-008, FR-016, FR-013, FR-014, FR-015
+Evidence: Inventory levels are tracked and automatically updated | After payment is processed, the system updates inventory and records the transaction. | before completing the order | confirms the order via email
+Diagnostic view: operation
+Gap type: MISSING_EXCEPTION_HANDLING
+
+2.22 Administrator authorization for plugin administration
+Requirement: The system shall permit Plugin installation, configuration, and management only when the User is authenticated as an Administrator.
+Source requirements: FR-019
+Evidence: Plugins can be installed, configured, and managed by administrators.
+Diagnostic view: isolation
+Gap type: UNDERSPECIFIED_AUTHORIZATION
+
+2.23 Plugin
+Requirement: When an Administrator successfully installs, configures, or manages a Plugin, the system shall apply the change to the affected Plugin-based functionality and record the operation in the Plugin administration log; if the operation fails, the system shall record the failure and display an error message.
+Source requirements: FR-019
+Evidence: Plugins can be installed, configured, and managed by administrators. | Extended features, logs, error messages
+Diagnostic view: dependency
+Gap type: MISSING_STATE_PROPAGATION
+DPS: 0.9400
+
+2.24 Plugin
+Requirement: Before installing or configuring a Plugin, the system shall validate the supplied Plugin files and configuration settings and shall reject invalid or incompatible inputs with an error message.
+Source requirements: FR-017, FR-019
+Evidence: Plugin files, configuration settings | Plugins can be installed, configured, and managed by administrators.
+Diagnostic view: operation
+Gap type: MISSING_VALIDATION

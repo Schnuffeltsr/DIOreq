@@ -1,0 +1,44 @@
+========================================================================
+DESIGN CONSTRAINTS AND REJECTED CANDIDATES
+========================================================================
+
+Produced by the Stage-5 refinement pass (Section 3.5).
+These entries are NOT part of the refined requirements document.
+
+Demoted to design constraints : 1
+Rejected during refinement    : 3
+
+------------------------------------------------------------------------
+1. DESIGN CONSTRAINTS (1)
+------------------------------------------------------------------------
+
+DC-001
+Statement: If Transaction recording fails after payment has been processed, the system shall recover or retry the recording and Inventory synchronization without processing the payment again.
+Demoted because: The no-duplicate-payment recovery objective is useful engineering guidance, but the prescribed retry and recovery behavior is not established by FR-016.
+Diagnostic view: operation
+Affected element: Transaction
+Source requirements: FR-016
+
+------------------------------------------------------------
+
+------------------------------------------------------------------------
+2. REJECTED CANDIDATES (3)
+------------------------------------------------------------------------
+
+REMOVED-001
+Statement: The system shall allow an authenticated User to view stored Account details, including contact information, Payment Preferences, and Purchase History.
+Rejected because: FR-004 requires storage but does not establish a user-facing operation for viewing all stored Account details.
+
+------------------------------------------------------------
+
+REMOVED-002
+Statement: The system shall allow an authenticated User to delete the User's Account and provide a confirmation message when deletion is complete.
+Rejected because: Account deletion is not stated or otherwise supported by FR-001 through FR-004.
+
+------------------------------------------------------------
+
+REMOVED-003
+Statement: Following a failed Plugin installation, configuration, or initialization, the system shall restore the Plugin and its configuration settings to their pre-operation state.
+Rejected because: The required rollback semantics are not supported by FR-019; its supported logging and error behavior is already covered by another consolidated requirement.
+
+------------------------------------------------------------
