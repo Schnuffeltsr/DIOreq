@@ -81,7 +81,7 @@ to appear on the command line:
 | Variable | Meaning |
 |---|---|
 | `OPENAI_API_KEY` | API key |
-| `OPENAI_BASE_URL` | Endpoint, e.g. `https://api.deepseek.com/v1` |
+| `OPENAI_BASE_URL` | Optional endpoint override for an OpenAI-compatible service |
 | `DIOREQ_EXTRACTION_MODEL` | Model for element and relation extraction |
 | `DIOREQ_VALIDATION_MODEL` | Model for nomination, validation, consolidation |
 | `DIOREQ_GENERATION_MODEL` | Model for requirement generation |
@@ -89,9 +89,9 @@ to appear on the command line:
 | `DIOREQ_VALIDATION_TEMPERATURE` | " |
 | `DIOREQ_GENERATION_TEMPERATURE` | " |
 
-Every runner also accepts `--model`, `--base-url`, `--api-key` and
-`--temperature`, which override the environment. `--model` sets all three
-stage models at once.
+The stage models default to `gpt-5.5`. Every runner also accepts `--model`,
+`--base-url`, `--api-key` and `--temperature`, which override the
+environment. `--model` sets all three stage models at once.
 
 A temperature of `none` omits the `temperature` field entirely. Reasoning
 models that accept only their built-in temperature then work unchanged, and
@@ -99,10 +99,9 @@ so do models that intermittently reject a configured value.
 
 ```bat
 set OPENAI_API_KEY=...
-set OPENAI_BASE_URL=https://api.deepseek.com/v1
 python DIOReq\RQ1\dioreq.py --dataset dataset_all.json ^
                             --output results\rq1.json ^
-                            --model deepseek-flash --runs 1
+                            --model gpt-5.5 --runs 1
 ```
 
 ### Building a dataset
@@ -189,30 +188,33 @@ python DIOReq\RQ1\dioreq.py ^
        --dataset dataset_all.json ^
        --output results\rq1.json ^
        --refined-dir results\refined ^
-       --runs 3 --dependency-budget 20 --model <model>
+       --model gpt-5.5
 ```
+
+Repeat the run per document with `--runs`, and cap how many ranked dependency
+records are reviewed with `--dependency-budget`. Both have defaults, shown by
+`--help`.
 
 ### RQ2 — component and diagnostic-view ablations
 
-Runs the eight variants reported in the paper's Table 4 by default.
-`--include-extended` adds six finer-grained sub-ablations that the paper does
-not report.
+Runs the variants reported in the paper's Table 4 by default.
+`--include-extended` adds finer-grained sub-ablations that the paper does not
+report.
 
 ```bat
 python DIOReq\RQ2\rq2.py ^
        --dataset dataset_all.json ^
        --output results\rq2.json ^
-       --runs 3 --dependency-budget 20 --model <model>
+       --model gpt-5.5
 ```
 
 Variants that agree on the preparation settings
 (`cross_requirement_extraction`, `max_parents`) share one extracted graph
-within a repetition. This is not only an optimisation: the endpoint is not
-deterministic even at temperature 0, so re-extracting the graph per variant
-would leave each variant comparing a different graph and mix the ablation
-effect with extraction noise. Eight variants therefore cost two graph
-preparations, not eight, and every same-group variant is guaranteed to have
-seen the identical graph.
+within a repetition. This is not only an optimisation: an endpoint is not
+guaranteed to be deterministic even at temperature 0, so re-extracting the
+graph per variant would leave each variant comparing a different graph and
+mix the ablation effect with extraction noise. Every same-group variant is
+guaranteed to have seen the identical graph.
 
 ### RQ3 — equal-budget ranking comparison
 
@@ -226,8 +228,11 @@ uses Eq. (10), `VFP@B_d = valid selected records / min(B, N_d)`.
 python DIOReq\RQ3\rq3.py ^
        --dataset dataset_all.json ^
        --output results\rq3.json ^
-       --budgets 5 10 15 20 --random-repetitions 30 --model <model>
+       --model gpt-5.5
 ```
+
+Budgets are given with `--budgets`; the random signal is averaged over
+`--random-repetitions` draws. Both have defaults, shown by `--help`.
 
 The document graph is prepared once per document and reused by every ranking
 condition, so the only thing that changes between conditions is the ranking
@@ -278,14 +283,14 @@ say — is scoped to its functional-requirements section.
 
 ## Sharding
 
-Every runner is sequential, and one document-run costs roughly 150–200 model
-calls. A full protocol is therefore days of wall-clock time in a single
-process, so all three accept `--shard I/N`:
+Every runner is sequential, and a single document-run issues many model
+calls, so a full protocol takes a long time in one process. All three
+runners therefore accept `--shard I/N`:
 
 ```bat
-python DIOReq\RQ3\rq3.py --dataset dataset_all.json --output results\rq3_shard0.json --shard 0/20 --model <model>
-python DIOReq\RQ3\rq3.py --dataset dataset_all.json --output results\rq3_shard1.json --shard 1/20 --model <model>
-:: ... 20 processes ...
+python DIOReq\RQ3\rq3.py --dataset dataset_all.json --output results\shard0.json --shard 0/4 --model gpt-5.5
+python DIOReq\RQ3\rq3.py --dataset dataset_all.json --output results\shard1.json --shard 1/4 --model gpt-5.5
+:: ... N processes, one per shard ...
 ```
 
 The shards partition the documents: every document is processed exactly once
@@ -298,11 +303,11 @@ list — needs a lock.
 
 ## Notes
 
-- **Endpoint determinism.** On the endpoint used during development, three
-  identical requests at `temperature=0.0` returned three different
-  consolidations. Repetitions in RQ1–RQ3 measure that variance rather than
-  assuming it away; RQ2 and RQ3 additionally keep the graph fixed within a
-  repetition so comparisons stay paired.
+- **Endpoint determinism.** A hosted endpoint is not guaranteed to return
+  identical output for identical requests, even at temperature 0.
+  Repetitions in RQ1–RQ3 measure that variance rather than assuming it away;
+  RQ2 and RQ3 additionally keep the graph fixed within a repetition so
+  comparisons stay paired.
 - **Malformed model output.** Every field read from a model response is
   coerced rather than trusted. A `null` where a list was requested, a
   confidence reported as a percentage, or a non-object JSON response costs at
