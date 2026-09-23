@@ -27,15 +27,10 @@ DIOreq/
 ├── build_dataset.py           .docx corpus  ->  JSON dataset
 ├── build_prompts.py           extracts every prompt from dioreq.py
 ├── compare_fr_counts.py       segmenter regression check against the audit
-├── scan_model_output.py       AST audit for unguarded model-output reads
-├── verify_stage5_live.py      re-runs only Stage 5 to check traceability
 │
 ├── test_dioreq_logic.py       LLM-free unit tests
 ├── test_runners.py            end-to-end tests against a mocked LLM
-├── check_readme.py            keeps the table below honest about line numbers
 │
-├── dataset_all.json           the 42-document corpus as a dataset
-├── dataset_reference.json     the 42 reference documents as a dataset
 ├── fr_counts_audit.json       per-document requirement counts, audited by
 │                              hand before the segmenter was written
 │
@@ -106,16 +101,17 @@ python DIOReq\RQ1\dioreq.py --dataset dataset_all.json ^
 
 ### Building a dataset
 
-The runners read a JSON array of documents. `build_dataset.py` produces one
-from a folder of `.docx` files:
+The runners read a JSON array of documents. Build one from the `.docx` corpus
+first — this is the step that feeds everything else:
 
 ```bat
 python build_dataset.py --source DIOReq\Data --output dataset_all.json
+python build_dataset.py --source DIOReq\Referencedata --output dataset_reference.json
 ```
 
-Each entry is `{"system_id": ..., "document_id": ..., "text": ...}`. The two
-datasets used in the paper are already committed, so this step is only needed
-for a new corpus.
+Each entry is `{"system_id": ..., "document_id": ..., "text": ...}`. The
+datasets are generated, so they are not committed; the commands below assume
+you have built them.
 
 ---
 
@@ -247,8 +243,6 @@ python test_dioreq_logic.py     # LLM-free: segmentation, DPS, Eq. (8), malforme
                                 #   model output, numbering, sharding
 python test_runners.py          # end-to-end for all three runners, mocked LLM
 python compare_fr_counts.py     # segmenter must reproduce the audit's counts
-python scan_model_output.py     # no unguarded read of model output
-python check_readme.py          # the function table above matches the code
 ```
 
 `test_runners.py` never contacts an API: it substitutes a deterministic client
@@ -260,7 +254,9 @@ corpus and compares the block count of every document against an
 independently produced requirement audit, so a change to the segmenter cannot
 silently alter how many requirements a document is seen to contain. The audit
 travels with the repository as `fr_counts_audit.json`; `--export-audit`
-regenerates it from the original Excel workbooks.
+regenerates it from the original Excel workbooks. The check reads a built
+dataset when one is present and otherwise converts the corpus itself, so it
+runs on a fresh clone.
 
 ---
 

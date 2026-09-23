@@ -8,9 +8,11 @@ results/
 _runner_test_out/
 _tmp/
 
-# Generated datasets. dataset_all.json and dataset_reference.json are the
-# exact datasets the paper's runs used and are tracked deliberately;
-# ad-hoc subsets are not.
+# Generated datasets. Build them with build_dataset.py. compare_fr_counts.py
+# falls back to converting the corpus on the fly, so the check still runs on
+# a clone that has never built them.
+dataset_all.json
+dataset_reference.json
 dataset_cctns.json
 
 # Local backups and scratch

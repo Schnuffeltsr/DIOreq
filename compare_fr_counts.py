@@ -156,9 +156,18 @@ def load_audit() -> tuple[dict[str, dict[str, int]], str]:
 
 
 # ------------------------------------------------------------------ check
-def find_dataset(name: str) -> pathlib.Path:
+# Where to find the corpus if the dataset JSON has not been built. The
+# datasets are generated artefacts and are not tracked, so a fresh clone
+# converts the .docx files on the fly.
+CORPUS_DIRS = {
+    "dataset_all.json": "DIOReq/Data",
+    "dataset_reference.json": "DIOReq/Referencedata",
+}
+
+
+def find_dataset(name: str) -> pathlib.Path | None:
     """
-    Locate a dataset JSON without hard-coding where it currently lives.
+    Locate a pre-built dataset JSON, or return None.
 
     The corpus may sit beside this script, under DIOReq/, or next to the
     documents it was built from.
@@ -173,10 +182,51 @@ def find_dataset(name: str) -> pathlib.Path:
         if candidate.is_file():
             return candidate
 
-    raise SystemExit(
-        f"{name} not found. Build it first:\n"
-        f"  python build_dataset.py --source DIOReq/Data --output DIOReq/{name}"
-    )
+    return None
+
+
+def documents_from_corpus(name: str) -> list | None:
+    """
+    Segment the corpus directly, without a pre-built dataset file.
+
+    Uses the same conversion build_dataset.py performs, so the counts are
+    identical whether the JSON was built beforehand or not.
+    """
+    import build_dataset
+
+    source = HERE / CORPUS_DIRS[name]
+
+    if not source.is_dir():
+        return None
+
+    return [
+        dioreq.DocumentRecord(
+            system_id=project,
+            document_id=document_id,
+            text=build_dataset.document_to_text(path),
+        )
+        for project, document_id, path in build_dataset.discover_documents(
+            source
+        )
+    ]
+
+
+def load_documents(name: str) -> tuple[list, str]:
+    """Return the documents for a corpus and a description of their origin."""
+    dataset = find_dataset(name)
+
+    if dataset is not None:
+        return dioreq.load_documents(dataset), str(dataset)
+
+    documents = documents_from_corpus(name)
+
+    if documents is None:
+        raise SystemExit(
+            f"Neither {name} nor {CORPUS_DIRS[name]} is present, so there is "
+            "nothing to check."
+        )
+
+    return documents, f"{CORPUS_DIRS[name]} (converted on the fly)"
 
 
 def main() -> None:
@@ -207,14 +257,13 @@ def main() -> None:
     known = 0
 
     for label, dataset_name, key, _, _, _ in SOURCES:
-        dataset = find_dataset(dataset_name)
-        documents = dioreq.load_documents(dataset)
+        documents, origin = load_documents(dataset_name)
         expected = audit[key]
 
         print("=" * 96)
         print(f"{label}  --  {len(documents)} documents, "
               f"{len(expected)} recorded counts")
-        print(f"dataset: {dataset}")
+        print(f"corpus: {origin}")
         print("=" * 96)
 
         matched = 0
