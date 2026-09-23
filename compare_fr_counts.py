@@ -1,15 +1,29 @@
 # compare_fr_counts.py
 """
-Compare split_into_frs() output against the requirement counts recorded in
-the workspace spreadsheets, which were produced by the earlier (independent)
-document audit.
+Data-level regression check for the requirement segmenter.
 
-Mismatches are the documents whose numbering dialect the splitter gets wrong.
+`split_into_frs` decides how many requirements a document is seen to
+contain. That number drives how many extraction calls a document costs and
+what every finding cites as its source, so a change to the segmenter must
+not silently alter it.
 
-Usage:  python compare_fr_counts.py
+This check re-segments the corpus and compares the block count of every
+document against an independent audit of the same documents, produced before
+the segmenter was written.
+
+The audit ships as ``fr_counts_audit.json`` so the check runs on a fresh
+clone with no extra inputs. If the original Excel workbooks are present they
+are used instead, and ``--export-audit`` rewrites the JSON from them.
+
+Usage
+-----
+    python compare_fr_counts.py
+    python compare_fr_counts.py --export-audit
 """
 from __future__ import annotations
 
+import argparse
+import json
 import pathlib
 import sys
 import zipfile
@@ -24,50 +38,18 @@ code_paths.install()
 
 import dioreq
 
+AUDIT_JSON = HERE / "fr_counts_audit.json"
+
 NS = "{http://schemas.openxmlformats.org/spreadsheetml/2006/main}"
 
-
-def read_sheet(path: pathlib.Path) -> list[list[str]]:
-    z = zipfile.ZipFile(path)
-    shared: list[str] = []
-
-    if "xl/sharedStrings.xml" in z.namelist():
-        root = ET.fromstring(z.read("xl/sharedStrings.xml"))
-        for si in root.findall(f"{NS}si"):
-            shared.append("".join(t.text or "" for t in si.iter(f"{NS}t")))
-
-    sheet = ET.fromstring(z.read("xl/worksheets/sheet1.xml"))
-    rows = []
-
-    for row in sheet.iter(f"{NS}row"):
-        cells = []
-        for cell in row.findall(f"{NS}c"):
-            value = cell.find(f"{NS}v")
-            if value is None:
-                cells.append("")
-            elif cell.get("t") == "s":
-                cells.append(shared[int(value.text)])
-            else:
-                cells.append(value.text or "")
-        rows.append(cells)
-
-    return rows
-
-
-def truth(path: pathlib.Path, name_col: int, count_col: int) -> dict[str, int]:
-    out: dict[str, int] = {}
-
-    for row in read_sheet(path):
-        if len(row) <= max(name_col, count_col):
-            continue
-        name = row[name_col].strip()
-        count = row[count_col].strip()
-        if not name.endswith(".docx") or not count.isdigit():
-            continue
-        out[pathlib.Path(name).stem] = int(count)
-
-    return out
-
+# label, dataset file, audit key, author's workbook, filename column,
+# count column
+SOURCES = [
+    ("测试数据 (DIOReq/Data)", "dataset_all.json", "corpus",
+     "原始文件.xlsx", 4, 5),
+    ("参考基准 (DIOReq/Referencedata)", "dataset_reference.json", "reference",
+     "本文方法生成的统计.xlsx", 3, 4),
+]
 
 # Documents whose recorded count is known to be wrong, with the evidence.
 # Listed here rather than silently tolerated: the check still fails for any
@@ -84,76 +66,177 @@ KNOWN_RECORDED_COUNT_ERRORS = {
 }
 
 
+# ------------------------------------------------------------------ workbook
+def read_sheet(path: pathlib.Path) -> list[list[str]]:
+    """Read the first worksheet of an xlsx without any third-party library."""
+    with zipfile.ZipFile(path) as archive:
+        shared: list[str] = []
+
+        if "xl/sharedStrings.xml" in archive.namelist():
+            root = ET.fromstring(archive.read("xl/sharedStrings.xml"))
+            for item in root.findall(f"{NS}si"):
+                shared.append(
+                    "".join(t.text or "" for t in item.iter(f"{NS}t"))
+                )
+
+        sheet = ET.fromstring(archive.read("xl/worksheets/sheet1.xml"))
+
+    rows = []
+
+    for row in sheet.iter(f"{NS}row"):
+        cells = []
+
+        for cell in row.findall(f"{NS}c"):
+            value = cell.find(f"{NS}v")
+
+            if value is None:
+                cells.append("")
+            elif cell.get("t") == "s":
+                cells.append(shared[int(value.text)])
+            else:
+                cells.append(value.text or "")
+
+        rows.append(cells)
+
+    return rows
+
+
+def counts_from_workbook(
+    path: pathlib.Path,
+    name_column: int,
+    count_column: int,
+) -> dict[str, int]:
+    counts: dict[str, int] = {}
+
+    for row in read_sheet(path):
+        if len(row) <= max(name_column, count_column):
+            continue
+
+        name = row[name_column].strip()
+        count = row[count_column].strip()
+
+        if name.endswith(".docx") and count.isdigit():
+            counts[pathlib.Path(name).stem] = int(count)
+
+    return counts
+
+
+def build_audit() -> dict[str, dict[str, int]]:
+    """Rebuild the audit from the author's Excel workbooks."""
+    audit: dict[str, dict[str, int]] = {}
+
+    for _, _, key, workbook, name_column, count_column in SOURCES:
+        path = HERE / workbook
+
+        if not path.is_file():
+            raise SystemExit(f"Workbook not found, cannot export: {path}")
+
+        audit[key] = counts_from_workbook(path, name_column, count_column)
+
+    return audit
+
+
+def load_audit() -> tuple[dict[str, dict[str, int]], str]:
+    """Return the audit and where it came from."""
+    workbooks = [HERE / source[3] for source in SOURCES]
+
+    if all(path.is_file() for path in workbooks):
+        return build_audit(), "the Excel workbooks in the working copy"
+
+    if AUDIT_JSON.is_file():
+        return (
+            json.loads(AUDIT_JSON.read_text(encoding="utf-8")),
+            AUDIT_JSON.name,
+        )
+
+    raise SystemExit(
+        f"Neither {AUDIT_JSON.name} nor the source workbooks are available, "
+        "so there is nothing to compare against."
+    )
+
+
+# ------------------------------------------------------------------ check
 def find_dataset(name: str) -> pathlib.Path:
     """
     Locate a dataset JSON without hard-coding where it currently lives.
 
-    The workspace is reorganised from time to time, so the dataset may sit at
-    the repository root, under DIOReq/, or beside the corpus it was built
-    from. Searching keeps this check working across those layouts instead of
-    failing with a confusing FileNotFoundError.
+    The corpus may sit beside this script, under DIOReq/, or next to the
+    documents it was built from.
     """
-    candidates = [
-        HERE / name,
-        HERE / "DIOReq" / name,
-    ]
+    candidates = [HERE / name, HERE / "DIOReq" / name]
 
     for base in (HERE, HERE / "DIOReq"):
-        if not base.is_dir():
-            continue
-        for pattern in (name, f"**/{name}"):
-            candidates.extend(sorted(base.glob(pattern)))
+        if base.is_dir():
+            candidates.extend(sorted(base.glob(f"**/{name}")))
 
     for candidate in candidates:
         if candidate.is_file():
             return candidate
 
     raise SystemExit(
-        f"{name} not found. Build it first, e.g.\n"
-        f"  python build_dataset.py --source DIOReq/Data "
-        f"--output DIOReq/{name}"
+        f"{name} not found. Build it first:\n"
+        f"  python build_dataset.py --source DIOReq/Data --output DIOReq/{name}"
     )
 
 
 def main() -> None:
-    datasets = [
-        ("测试数据 (DIOReq/Data)", find_dataset("dataset_all.json"),
-         truth(HERE / "原始文件.xlsx", 4, 5)),
-        ("参考基准 (DIOReq/Referencedata)",
-         find_dataset("dataset_reference.json"),
-         truth(HERE / "本文方法生成的统计.xlsx", 3, 4)),
-    ]
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--export-audit",
+        action="store_true",
+        help="Rewrite fr_counts_audit.json from the Excel workbooks and exit.",
+    )
+    args = parser.parse_args()
+
+    if args.export_audit:
+        audit = build_audit()
+        AUDIT_JSON.write_text(
+            json.dumps(audit, ensure_ascii=False, indent=2, sort_keys=True)
+            + "\n",
+            encoding="utf-8",
+        )
+        for key, counts in audit.items():
+            print(f"{key:12s} {len(counts)} documents")
+        print(f"wrote {AUDIT_JSON}")
+        return
+
+    audit, provenance = load_audit()
+    print(f"audit source: {provenance}\n")
 
     unexpected = 0
     known = 0
 
-    for label, dataset, expected in datasets:
-        docs = dioreq.load_documents(dataset)
+    for label, dataset_name, key, _, _, _ in SOURCES:
+        dataset = find_dataset(dataset_name)
+        documents = dioreq.load_documents(dataset)
+        expected = audit[key]
+
         print("=" * 96)
-        print(f"{label}  --  {len(docs)} documents, "
-              f"{len(expected)} recorded counts   [{dataset}]")
+        print(f"{label}  --  {len(documents)} documents, "
+              f"{len(expected)} recorded counts")
+        print(f"dataset: {dataset}")
         print("=" * 96)
 
-        ok = 0
+        matched = 0
         missing = []
-        bad = []
+        mismatched = []
 
-        for doc in docs:
-            got = len(dioreq.split_into_frs(doc.text))
-            want = expected.get(doc.document_id)
+        for document in documents:
+            got = len(dioreq.split_into_frs(document.text))
+            want = expected.get(document.document_id)
 
             if want is None:
-                missing.append(doc.document_id)
+                missing.append(document.document_id)
             elif got == want:
-                ok += 1
+                matched += 1
             else:
-                bad.append((doc.document_id, got, want))
+                mismatched.append((document.document_id, got, want))
 
-        print(f"exact match : {ok}/{len(docs)}")
+        print(f"exact match : {matched}/{len(documents)}")
         print(f"unrecorded  : {len(missing)}")
-        print(f"mismatch    : {len(bad)}")
+        print(f"mismatch    : {len(mismatched)}")
 
-        for name, got, want in sorted(bad, key=lambda x: x[1]):
+        for name, got, want in sorted(mismatched, key=lambda item: item[1]):
             if name in KNOWN_RECORDED_COUNT_ERRORS:
                 known += 1
                 print(f"   KNOWN {name:50s} split={got:4d} recorded={want:4d}")

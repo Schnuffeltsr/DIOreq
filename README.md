@@ -36,6 +36,8 @@ DIOreq/
 │
 ├── dataset_all.json           the 42-document corpus as a dataset
 ├── dataset_reference.json     the 42 reference documents as a dataset
+├── fr_counts_audit.json       per-document requirement counts, audited by
+│                              hand before the segmenter was written
 │
 ├── prompts/                   every prompt template, by pipeline section
 ├── smoke_run/                 real end-to-end runs kept as evidence
@@ -249,9 +251,11 @@ and checks output shape, the Stage-5 partition, budget semantics, and that one
 failing run does not abort a batch.
 
 `compare_fr_counts.py` is a data-level regression check. It re-segments the
-corpus and compares the block count of every document against the
+corpus and compares the block count of every document against an
 independently produced requirement audit, so a change to the segmenter cannot
-silently alter how many requirements a document is seen to contain.
+silently alter how many requirements a document is seen to contain. The audit
+travels with the repository as `fr_counts_audit.json`; `--export-audit`
+regenerates it from the original Excel workbooks.
 
 ---
 
