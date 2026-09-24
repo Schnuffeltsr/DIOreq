@@ -80,13 +80,32 @@ to appear on the command line:
 | `DIOREQ_EXTRACTION_MODEL` | Model for element and relation extraction |
 | `DIOREQ_VALIDATION_MODEL` | Model for nomination, validation, consolidation |
 | `DIOREQ_GENERATION_MODEL` | Model for requirement generation |
-| `DIOREQ_EXTRACTION_TEMPERATURE` | Override the sampling temperature |
-| `DIOREQ_VALIDATION_TEMPERATURE` | " |
-| `DIOREQ_GENERATION_TEMPERATURE` | " |
+| `DIOREQ_EXTRACTION_TEMPERATURE` | Sampling temperature for element and relation extraction (default `0.0`) |
+| `DIOREQ_VALIDATION_TEMPERATURE` | Sampling temperature for classification and for merging, filtering and deduplication (default `0.1`) |
+| `DIOREQ_GENERATION_TEMPERATURE` | Sampling temperature for requirement generation (default `0.2`) |
 
 The stage models default to `gpt-5.5`. Every runner also accepts `--model`,
 `--base-url`, `--api-key` and `--temperature`, which override the
 environment. `--model` sets all three stage models at once.
+
+The temperature defaults are the setting reported in Section 4.1.2 of the
+paper. Each value covers the steps listed below; the mapping is also the
+comment on `ModelConfig` in `DIOReq/RQ1/dioreq.py`.
+
+| Stage | Step | Sampling temperature |
+|---|---|---|
+| 1 | Typed requirement element extraction | `0.0` — `DIOREQ_EXTRACTION_TEMPERATURE` |
+| 2 | Intra- and cross-requirement dependency extraction | `0.0` — `DIOREQ_EXTRACTION_TEMPERATURE` |
+| 3 | Dependency, isolation and operation view nomination (classification) | `0.1` — `DIOREQ_VALIDATION_TEMPERATURE` |
+| 4 | Evidence, coverage and boundary validation (classification) | `0.1` — `DIOREQ_VALIDATION_TEMPERATURE` |
+| 4 | Requirement generation | `0.2` — `DIOREQ_GENERATION_TEMPERATURE` |
+| 5 | Merging, filtering and deduplication (consolidation) | `0.1` — `DIOREQ_VALIDATION_TEMPERATURE` |
+| 5 | Requirement renumbering | deterministic — no model call |
+
+Renumbering is the last step of stage 5 and is the only step in the paper's
+`0.0` group that issues no request: continuing the document's own integer
+sequence needs no model, so `assign_requirement_numbers()` is pure Python and
+reproduces byte-identically.
 
 A temperature of `none` omits the `temperature` field entirely. Reasoning
 models that accept only their built-in temperature then work unchanged, and
@@ -133,30 +152,30 @@ The full table, with the equation each function evaluates:
 
 | Stage | Function | Line | Paper |
 |---|---|---|---|
-| 3.1 | `split_into_frs` | 452 | segments a specification into requirement blocks; picks the deepest numbering level present |
-| 3.1 | `extract_elements` | 800 | the typed element extraction call, one per requirement block |
-| 3.1 | `merge_elements` | 856 | canonicalises duplicate element names across blocks |
-| 3.1 | `extract_dependency_relations` | 1051 | two-pass relation extraction: intra-requirement, then cross-requirement |
-| 3.1 | `validate_relation_items` | 1005 | rejects unknown relation types, self-loops, and unsupported edges |
-| 3.1 | `deduplicate_relations` | 1144 | collapses duplicate directed edges |
-| 3.1 | `DependencyGraphs.build` | 1453 | semantic `MultiDiGraph` plus the acyclic computational graph |
-| 3.2 | `DependencyGraphs.propagate` | 1618 | Eq. (3), forward activation in topological order with source clamping |
-| 3.2 | `DependencyGraphs.dps` | 1647 | Eq. (4), the clamped-at-1 minus clamped-at-0 difference; Eq. (5), non-negativity |
-| 3.2 | `deterministic_shortest_path` | 1189 | the Topology ranking signal |
-| 3.2 | `AllPathSupportIndex` / `maximum_geometric_path_support` | 1347 / 1396 | Eq. (8), maximum geometric-mean support over **all** admissible paths |
-| 3.2 | `rank_records` | 1759 | orders the record pool by `dps`, `extraction_support`, `topology`, `unranked` or `random` |
-| 3.3 | `nominate_dependency_findings` | 1945 | dependency-view gap nomination over the ranked budget |
-| 3.3 | `nominate_isolation_findings` | 2038 | isolation-view nomination over disconnected elements |
-| 3.3 | `nominate_operation_findings` | 2104 | operation-view nomination over `DATA` and `FUNCTION` elements |
-| 3.4 | `validate_findings` | 2209 | evidence / coverage / boundary decisions in one call per finding |
-| 3.4 | `DiagnosticFinding.eligible_for_generation` | 270 | requires `YES` / `NO` / `YES`; `UNCERTAIN` is never forwarded |
-| 3.5 | `generate_candidates` | 2350 | one reviewable requirement per eligible finding, with DPS withheld |
-| 3.5 | `consolidate_candidates` | 2433 | merge, refine, deduplicate, filter; returns KEEP / DEMOTE / REMOVE |
-| 3.5 | `numbering_context` | 2789 | detects the document's numbering dialect and last used number |
-| 3.5 | `build_refined_document` | 2846 | the terminal artefact: original text plus numbered additions |
-| 3.5 | `build_design_constraints_document` | 2902 | companions for demoted and rejected candidates |
-| 3.5 | `build_refinement_report` | 2959 | Markdown summary of the refinement pass |
-| — | `DIOReqPipeline` | 3051 | composes the five stages; `run_dioreq` at 3342 drives a dataset |
+| 3.1 | `split_into_frs` | 469 | segments a specification into requirement blocks; picks the deepest numbering level present |
+| 3.1 | `extract_elements` | 817 | the typed element extraction call, one per requirement block |
+| 3.1 | `merge_elements` | 873 | canonicalises duplicate element names across blocks |
+| 3.1 | `extract_dependency_relations` | 1068 | two-pass relation extraction: intra-requirement, then cross-requirement |
+| 3.1 | `validate_relation_items` | 1022 | rejects unknown relation types, self-loops, and unsupported edges |
+| 3.1 | `deduplicate_relations` | 1161 | collapses duplicate directed edges |
+| 3.1 | `DependencyGraphs.build` | 1470 | semantic `MultiDiGraph` plus the acyclic computational graph |
+| 3.2 | `DependencyGraphs.propagate` | 1635 | Eq. (3), forward activation in topological order with source clamping |
+| 3.2 | `DependencyGraphs.dps` | 1664 | Eq. (4), the clamped-at-1 minus clamped-at-0 difference; Eq. (5), non-negativity |
+| 3.2 | `deterministic_shortest_path` | 1206 | the Topology ranking signal |
+| 3.2 | `AllPathSupportIndex` / `maximum_geometric_path_support` | 1364 / 1413 | Eq. (8), maximum geometric-mean support over **all** admissible paths |
+| 3.2 | `rank_records` | 1776 | orders the record pool by `dps`, `extraction_support`, `topology`, `unranked` or `random` |
+| 3.3 | `nominate_dependency_findings` | 1962 | dependency-view gap nomination over the ranked budget |
+| 3.3 | `nominate_isolation_findings` | 2055 | isolation-view nomination over disconnected elements |
+| 3.3 | `nominate_operation_findings` | 2121 | operation-view nomination over `DATA` and `FUNCTION` elements |
+| 3.4 | `validate_findings` | 2226 | evidence / coverage / boundary decisions in one call per finding |
+| 3.4 | `DiagnosticFinding.eligible_for_generation` | 287 | requires `YES` / `NO` / `YES`; `UNCERTAIN` is never forwarded |
+| 3.5 | `generate_candidates` | 2367 | one reviewable requirement per eligible finding, with DPS withheld |
+| 3.5 | `consolidate_candidates` | 2450 | merge, refine, deduplicate, filter; returns KEEP / DEMOTE / REMOVE |
+| 3.5 | `numbering_context` | 2806 | detects the document's numbering dialect and last used number |
+| 3.5 | `build_refined_document` | 2863 | the terminal artefact: original text plus numbered additions |
+| 3.5 | `build_design_constraints_document` | 2919 | companions for demoted and rejected candidates |
+| 3.5 | `build_refinement_report` | 2976 | Markdown summary of the refinement pass |
+| — | `DIOReqPipeline` | 3068 | composes the five stages; `run_dioreq` at 3359 drives a dataset |
 
 The three refinement outcomes are a partition: every raw candidate identifier
 appears in exactly one of `candidates`, `design_constraints`, or

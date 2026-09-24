@@ -41,8 +41,22 @@ class ModelConfig:
 
     # None means "do not send a temperature field", for models that accept
     # only their built-in sampling temperature.
+    #
+    # The defaults are the setting reported in Section 4.1.2 of the
+    # manuscript, mapped onto the steps that use them:
+    #
+    #   0.0  typed requirement element extraction and cross-requirement
+    #        dependency extraction            -> extraction_temperature
+    #   0.1  classification (the three view-nomination steps and evidence
+    #        validation) and merging, filtering and deduplication
+    #        (consolidation)                  -> validation_temperature
+    #   0.2  requirement generation           -> generation_temperature
+    #
+    # Requirement renumbering belongs to the manuscript's 0.0 group but is
+    # deterministic here: continuing an existing integer sequence needs no
+    # model call, so it issues no request and has no temperature of its own.
     extraction_temperature: float | None = 0.0
-    validation_temperature: float | None = 0.0
+    validation_temperature: float | None = 0.1
     generation_temperature: float | None = 0.2
 
 
@@ -101,6 +115,9 @@ def default_model_config() -> ModelConfig:
     environment variables set after this module has been imported still
     take effect. Importing a module-level constant would silently freeze
     the environment as it was at import.
+
+    The temperature defaults are the ones reported in Section 4.1.2 of the
+    manuscript; see ``ModelConfig`` for the step-by-step mapping.
     """
     return ModelConfig(
         extraction_model=os.getenv(
@@ -116,7 +133,7 @@ def default_model_config() -> ModelConfig:
             "DIOREQ_EXTRACTION_TEMPERATURE", 0.0
         ),
         validation_temperature=env_temperature(
-            "DIOREQ_VALIDATION_TEMPERATURE", 0.0
+            "DIOREQ_VALIDATION_TEMPERATURE", 0.1
         ),
         generation_temperature=env_temperature(
             "DIOREQ_GENERATION_TEMPERATURE", 0.2

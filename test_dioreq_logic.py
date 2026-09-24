@@ -1106,6 +1106,7 @@ def temperature_env_override():
             os.environ.pop(key, None)
         config = dioreq.default_model_config()
         assert config.extraction_temperature == 0.0
+        assert config.validation_temperature == 0.1
         assert config.generation_temperature == 0.2
     finally:
         for key, value in saved.items():
@@ -1118,6 +1119,114 @@ def temperature_env_override():
 
 
 case("temperature environment override", temperature_env_override)
+
+
+def paper_temperature_scheme():
+    """
+    Section 4.1.2: 0.0 for extraction and renumbering, 0.1 for
+    classification, merging, filtering and deduplication, 0.2 for
+    requirement generation.
+
+    The defaults must match that setting, and every model call must sample
+    at the temperature its step belongs to.
+    """
+    defaults = dioreq.ModelConfig("e", "v", "g")
+    assert defaults.extraction_temperature == 0.0, defaults
+    assert defaults.validation_temperature == 0.1, defaults
+    assert defaults.generation_temperature == 0.2, defaults
+
+    resolved = dioreq.default_model_config()
+    assert resolved.validation_temperature == 0.1, resolved
+
+    src = (code_paths.find_dioreq() / "dioreq.py").read_text(encoding="utf-8")
+
+    import ast
+    tree = ast.parse(src)
+    lines = src.splitlines()
+
+    def body(name):
+        """The full source of one function, via the AST (multiline-safe)."""
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef) and node.name == name:
+                return "\n".join(lines[node.lineno - 1:node.end_lineno])
+        raise AssertionError(f"{name}() not found in dioreq.py")
+
+    expected = {
+        # 0.0 -- extraction (renumbering is deterministic, see below)
+        "extract_elements": "extraction_temperature",
+        "extract_dependency_relations": "extraction_temperature",
+        # 0.1 -- classification plus merging/filtering/deduplication
+        "nominate_dependency_findings": "validation_temperature",
+        "nominate_isolation_findings": "validation_temperature",
+        "nominate_operation_findings": "validation_temperature",
+        "validate_findings": "validation_temperature",
+        "consolidate_candidates": "validation_temperature",
+        # 0.2 -- requirement generation
+        "generate_candidates": "generation_temperature",
+    }
+    for func, field in expected.items():
+        text = body(func)
+        assert f"temperature=model_config.{field}" in text, \
+            f"{func}() must sample at model_config.{field}"
+
+    # Renumbering is deterministic: it must not issue a model call at all.
+    for func in ("assign_requirement_numbers", "build_refined_document",
+                 "numbering_context", "split_into_frs"):
+        assert "temperature=" not in body(func), \
+            f"{func}() must not call the model"
+
+    return ("0.0 extraction / 0.1 classification+consolidation / "
+            "0.2 generation; renumbering deterministic")
+
+
+case("temperature scheme matches the manuscript", paper_temperature_scheme)
+
+
+def readme_function_lines_are_current():
+    """
+    The README cites a line number for every function in the stage table.
+    Those numbers must still point at the real definitions, otherwise the
+    map between the paper and the code silently misleads a reader.
+    """
+    import ast
+    import re
+
+    readme = code_paths.ROOT / "README.md"
+    if not readme.is_file():
+        return "no README.md at the repository root (skipped)"
+
+    source = (code_paths.find_dioreq() / "dioreq.py").read_text(
+        encoding="utf-8")
+    defined = {}
+    for node in ast.walk(ast.parse(source)):
+        if isinstance(node, (ast.FunctionDef, ast.ClassDef)):
+            defined.setdefault(node.name, node.lineno)
+        if isinstance(node, ast.ClassDef):
+            for child in node.body:
+                if isinstance(child, (ast.FunctionDef, ast.ClassDef)):
+                    defined[f"{node.name}.{child.name}"] = child.lineno
+
+    row = re.compile(
+        r"(?m)^\| [^|]+ \| (`[^`]+`(?: / `[^`]+`)?) \| (\d+(?: / \d+)*) \|"
+    )
+    checked, stale = 0, []
+    for match in row.finditer(readme.read_text(encoding="utf-8")):
+        names = [n for n in re.findall(r"`([^`]+)`", match.group(1))
+                 if n in defined]
+        numbers = [int(n) for n in match.group(2).split(" / ")]
+        if len(names) != len(numbers):
+            continue
+        for name, cited in zip(names, numbers):
+            checked += 1
+            if cited != defined[name]:
+                stale.append(
+                    f"{name}: README says {cited}, def is at {defined[name]}")
+
+    assert not stale, "; ".join(stale)
+    return f"{checked} function line number(s) agree with the source"
+
+
+case("README line numbers match the source", readme_function_lines_are_current)
 
 
 def failed_run_is_recorded():
