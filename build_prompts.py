@@ -231,12 +231,9 @@ A("Placeholders written `{like_this}` are substituted by `.format(...)` at "
   "the call site. Literal JSON braces are escaped as `{{` and `}}` in the "
   "template and appear as `{` and `}` in the string that is actually sent.\n")
 A("## Stage mapping\n")
-A("Section 3 of the paper groups the pipeline into five stages. The "
-  "framework-overview sentence in the Section 3 introduction describes the "
-  "same pipeline as \"four main stages\", which splits the first stage and "
-  "merges the third and fourth. This directory follows the five Section 3 "
-  "subsections, which is the finer-grained and directly executable "
-  "decomposition.\n")
+A("The pipeline divides into five stages. Section 3 of the paper describes "
+  "them as five subsections, which is the directly executable "
+  "decomposition, and this directory follows that grouping.\n")
 A("| Directory | Paper section | Stage | Prompt files |")
 A("|---|---|---|---|")
 for folder, sec, title in STAGES:

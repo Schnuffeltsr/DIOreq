@@ -3,8 +3,7 @@
 DIOReq: Multi-View Dependency-Guided Requirement-Gap Diagnosis and
 Evidence-Grounded Completion.
 
-Core implementation and experiment runner for the proposed method only.
-Comparison baselines and evaluation procedures are kept outside this module.
+Core implementation and experiment runner of the proposed method.
 
 Command line:
     python dioreq.py --dataset data/documents.json \

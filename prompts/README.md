@@ -11,7 +11,7 @@ Placeholders written `{like_this}` are substituted by `.format(...)` at the call
 
 ## Stage mapping
 
-Section 3 of the paper groups the pipeline into five stages. The framework-overview sentence in the Section 3 introduction describes the same pipeline as "four main stages", which splits the first stage and merges the third and fourth. This directory follows the five Section 3 subsections, which is the finer-grained and directly executable decomposition.
+The pipeline divides into five stages. Section 3 of the paper describes them as five subsections, which is the directly executable decomposition, and this directory follows that grouping.
 
 | Directory | Paper section | Stage | Prompt files |
 |---|---|---|---|
@@ -25,24 +25,24 @@ Section 3 of the paper groups the pipeline into five stages. The framework-overv
 
 | File | Type | Role | Called from | Placeholders |
 |---|---|---|---|---|
-| `stage1_semantic_dependency_graph/element_extraction.system.txt` | system prompt | Typed requirement-element extraction (one call per requirement block) | `extract_elements()` L835 | &mdash; |
-| `stage1_semantic_dependency_graph/element_extraction.user.txt` | user template | Typed requirement-element extraction (one call per requirement block) | `extract_elements()` L835 | `{requirement_id}`, `{requirement_text}` |
-| `stage1_semantic_dependency_graph/relation_extraction.cross.system.txt` | system prompt | Pass 2 - cross-requirement directional relations | `extract_dependency_relations()` L1133 | &mdash; |
-| `stage1_semantic_dependency_graph/relation_extraction.cross.user.txt` | user template | Pass 2 - cross-requirement directional relations | `extract_dependency_relations()` L1133 | `{elements}`, `{existing_relations}`, `{disconnected_elements}`, `{document_text}` |
-| `stage1_semantic_dependency_graph/relation_extraction.intra.system.txt` | system prompt | Pass 1 - intra-requirement directional relations | `extract_dependency_relations()` L1099 | &mdash; |
-| `stage1_semantic_dependency_graph/relation_extraction.intra.user.txt` | user template | Pass 1 - intra-requirement directional relations | `extract_dependency_relations()` L1099 | `{elements}`, `{requirement_id}`, `{requirement_text}` |
-| `stage3_multi_view_nomination/dependency_nomination.system.txt` | system prompt | Dependency-view gap nomination | `nominate_dependency_findings()` L1993 | &mdash; |
-| `stage3_multi_view_nomination/dependency_nomination.user.txt` | user template | Dependency-view gap nomination | `nominate_dependency_findings()` L1993 | `{source}`, `{target}`, `{path}`, `{relation_types}`, `{patterns}`, `{source_requirements}` |
-| `stage3_multi_view_nomination/isolation_nomination.system.txt` | system prompt | Isolation-view gap nomination | `nominate_isolation_findings()` L2066 | &mdash; |
-| `stage3_multi_view_nomination/isolation_nomination.user.txt` | user template | Isolation-view gap nomination | `nominate_isolation_findings()` L2066 | `{element}`, `{element_type}`, `{source_requirements}`, `{supporting_excerpts}`, `{document_text}` |
-| `stage3_multi_view_nomination/operation_nomination.system.txt` | system prompt | Operation-view gap nomination | `nominate_operation_findings()` L2136 | &mdash; |
-| `stage3_multi_view_nomination/operation_nomination.user.txt` | user template | Operation-view gap nomination | `nominate_operation_findings()` L2136 | `{elements}`, `{document_text}` |
-| `stage4_validation/validation.system.txt` | system prompt | Evidence / coverage / boundary validation | `validate_findings()` L2236 | &mdash; |
-| `stage4_validation/validation.user.txt` | user template | Evidence / coverage / boundary validation | `validate_findings()` L2236 | `{finding}`, `{document_text}` |
-| `stage5_generation_consolidation/consolidation.system.txt` | system prompt | Cross-view consolidation, refinement, deduplication, filtering | `consolidate_candidates()` L2478 | &mdash; |
-| `stage5_generation_consolidation/consolidation.user.txt` | user template | Cross-view consolidation, refinement, deduplication, filtering | `consolidate_candidates()` L2478 | `{candidates}`, `{document_text}`, `{merge}`, `{refine}`, `{deduplicate}`, `{filtering}` |
-| `stage5_generation_consolidation/generation.system.txt` | system prompt | Constrained requirement generation | `generate_candidates()` L2397 | &mdash; |
-| `stage5_generation_consolidation/generation.user.txt` | user template | Constrained requirement generation | `generate_candidates()` L2397 | `{finding}`, `{source_requirements}`, `{element_names}` |
+| `stage1_semantic_dependency_graph/element_extraction.system.txt` | system prompt | Typed requirement-element extraction (one call per requirement block) | `extract_elements()` L834 | &mdash; |
+| `stage1_semantic_dependency_graph/element_extraction.user.txt` | user template | Typed requirement-element extraction (one call per requirement block) | `extract_elements()` L834 | `{requirement_id}`, `{requirement_text}` |
+| `stage1_semantic_dependency_graph/relation_extraction.cross.system.txt` | system prompt | Pass 2 - cross-requirement directional relations | `extract_dependency_relations()` L1132 | &mdash; |
+| `stage1_semantic_dependency_graph/relation_extraction.cross.user.txt` | user template | Pass 2 - cross-requirement directional relations | `extract_dependency_relations()` L1132 | `{elements}`, `{existing_relations}`, `{disconnected_elements}`, `{document_text}` |
+| `stage1_semantic_dependency_graph/relation_extraction.intra.system.txt` | system prompt | Pass 1 - intra-requirement directional relations | `extract_dependency_relations()` L1098 | &mdash; |
+| `stage1_semantic_dependency_graph/relation_extraction.intra.user.txt` | user template | Pass 1 - intra-requirement directional relations | `extract_dependency_relations()` L1098 | `{elements}`, `{requirement_id}`, `{requirement_text}` |
+| `stage3_multi_view_nomination/dependency_nomination.system.txt` | system prompt | Dependency-view gap nomination | `nominate_dependency_findings()` L1992 | &mdash; |
+| `stage3_multi_view_nomination/dependency_nomination.user.txt` | user template | Dependency-view gap nomination | `nominate_dependency_findings()` L1992 | `{source}`, `{target}`, `{path}`, `{relation_types}`, `{patterns}`, `{source_requirements}` |
+| `stage3_multi_view_nomination/isolation_nomination.system.txt` | system prompt | Isolation-view gap nomination | `nominate_isolation_findings()` L2065 | &mdash; |
+| `stage3_multi_view_nomination/isolation_nomination.user.txt` | user template | Isolation-view gap nomination | `nominate_isolation_findings()` L2065 | `{element}`, `{element_type}`, `{source_requirements}`, `{supporting_excerpts}`, `{document_text}` |
+| `stage3_multi_view_nomination/operation_nomination.system.txt` | system prompt | Operation-view gap nomination | `nominate_operation_findings()` L2135 | &mdash; |
+| `stage3_multi_view_nomination/operation_nomination.user.txt` | user template | Operation-view gap nomination | `nominate_operation_findings()` L2135 | `{elements}`, `{document_text}` |
+| `stage4_validation/validation.system.txt` | system prompt | Evidence / coverage / boundary validation | `validate_findings()` L2235 | &mdash; |
+| `stage4_validation/validation.user.txt` | user template | Evidence / coverage / boundary validation | `validate_findings()` L2235 | `{finding}`, `{document_text}` |
+| `stage5_generation_consolidation/consolidation.system.txt` | system prompt | Cross-view consolidation, refinement, deduplication, filtering | `consolidate_candidates()` L2477 | &mdash; |
+| `stage5_generation_consolidation/consolidation.user.txt` | user template | Cross-view consolidation, refinement, deduplication, filtering | `consolidate_candidates()` L2477 | `{candidates}`, `{document_text}`, `{merge}`, `{refine}`, `{deduplicate}`, `{filtering}` |
+| `stage5_generation_consolidation/generation.system.txt` | system prompt | Constrained requirement generation | `generate_candidates()` L2396 | &mdash; |
+| `stage5_generation_consolidation/generation.user.txt` | user template | Constrained requirement generation | `generate_candidates()` L2396 | `{finding}`, `{source_requirements}`, `{element_names}` |
 
 ## Notes
 

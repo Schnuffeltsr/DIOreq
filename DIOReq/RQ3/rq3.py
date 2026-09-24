@@ -2,21 +2,14 @@
 """
 RQ3 runner: equal-budget comparison of ranking signals.
 
-Two deliberate differences from the first draft:
+The document is prepared ONCE per document and the resulting elements,
+relations, graph, and source-target record pool are reused by every ranking
+condition, so the conditions share the same extracted graph and differ only
+in the ordering signal.
 
-1. The document is prepared ONCE per document and the resulting elements,
-   relations, graph, and source-target record pool are reused by every
-   ranking condition. The paper requires that the ranking conditions share
-   the same extracted graph and differ only in the ordering signal; the
-   earlier draft re-extracted the graph inside the budget/signal loop,
-   which both broke that premise and multiplied the number of model calls
-   by the number of conditions.
-
-2. The automatic precision proxy is reported as
-   ``auto_valid_record_count`` / ``auto_valid_precision`` rather than as
-   ``vfp``. The paper's VFP@B additionally requires blinded reviewer
-   judgement, which is performed outside this code, so the automatic
-   quantity must not be presented as VFP.
+The budget is applied before nomination and before validation. Precision is
+reported as ``auto_valid_record_count`` and ``auto_valid_precision``,
+computed over the ``min(B, N_d)`` selected records.
 """
 from __future__ import annotations
 

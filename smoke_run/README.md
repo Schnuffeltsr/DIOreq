@@ -2,11 +2,11 @@
 
 Real end-to-end runs of the RQ1 runner against a live endpoint, kept as
 evidence that the released code executes and produces the artefacts the paper
-describes. Each folder holds the exact dataset that was passed in, the raw
-JSON that came out, the console log, and the Stage-5 documents.
+describes. The `WebStore_simple3_tabular/` run keeps the exact dataset that
+was passed in, the raw JSON that came out, the console log, and the Stage-5
+documents.
 
-The per-stage counts and token usage are in each folder's `run.log`; they are
-not repeated here.
+Per-stage counts and token usage are in `run.log`; they are not repeated here.
 
 The method module lives in `DIOReq/RQ1/dioreq.py`. Re-run a smoke case with:
 
@@ -42,6 +42,5 @@ What this run demonstrates:
 
 ## CCTNS_simple1
 
-Only the input dataset is kept here. It is the smallest document in the
-corpus and the quickest way to check a fresh API configuration; run it with
-the command above.
+The smallest document in the corpus, and the quickest way to check a fresh
+API configuration. Run it with the command above.

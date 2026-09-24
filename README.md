@@ -151,30 +151,30 @@ The full table, with the equation each function evaluates:
 
 | Stage | Function | Line | Paper |
 |---|---|---|---|
-| 3.1 | `split_into_frs` | 469 | segments a specification into requirement blocks; picks the deepest numbering level present |
-| 3.1 | `extract_elements` | 817 | the typed element extraction call, one per requirement block |
-| 3.1 | `merge_elements` | 873 | canonicalises duplicate element names across blocks |
-| 3.1 | `extract_dependency_relations` | 1068 | two-pass relation extraction: intra-requirement, then cross-requirement |
-| 3.1 | `validate_relation_items` | 1022 | rejects unknown relation types, self-loops, and unsupported edges |
-| 3.1 | `deduplicate_relations` | 1161 | collapses duplicate directed edges |
-| 3.1 | `DependencyGraphs.build` | 1470 | semantic `MultiDiGraph` plus the acyclic computational graph |
-| 3.2 | `DependencyGraphs.propagate` | 1635 | Eq. (3), forward activation in topological order with source clamping |
-| 3.2 | `DependencyGraphs.dps` | 1664 | Eq. (4), the clamped-at-1 minus clamped-at-0 difference; Eq. (5), non-negativity |
-| 3.2 | `deterministic_shortest_path` | 1206 | the Topology ranking signal |
-| 3.2 | `AllPathSupportIndex` / `maximum_geometric_path_support` | 1364 / 1413 | Eq. (8), maximum geometric-mean support over **all** admissible paths |
-| 3.2 | `rank_records` | 1776 | orders the record pool by `dps`, `extraction_support`, `topology`, `unranked` or `random` |
-| 3.3 | `nominate_dependency_findings` | 1962 | dependency-view gap nomination over the ranked budget |
-| 3.3 | `nominate_isolation_findings` | 2055 | isolation-view nomination over disconnected elements |
-| 3.3 | `nominate_operation_findings` | 2121 | operation-view nomination over `DATA` and `FUNCTION` elements |
-| 3.4 | `validate_findings` | 2226 | evidence / coverage / boundary decisions in one call per finding |
-| 3.4 | `DiagnosticFinding.eligible_for_generation` | 287 | requires `YES` / `NO` / `YES`; `UNCERTAIN` is never forwarded |
-| 3.5 | `generate_candidates` | 2367 | one reviewable requirement per eligible finding, with DPS withheld |
-| 3.5 | `consolidate_candidates` | 2450 | merge, refine, deduplicate, filter; returns KEEP / DEMOTE / REMOVE |
-| 3.5 | `numbering_context` | 2806 | detects the document's numbering dialect and last used number |
-| 3.5 | `build_refined_document` | 2863 | the terminal artefact: original text plus numbered additions |
-| 3.5 | `build_design_constraints_document` | 2919 | companions for demoted and rejected candidates |
-| 3.5 | `build_refinement_report` | 2976 | Markdown summary of the refinement pass |
-| — | `DIOReqPipeline` | 3068 | composes the five stages; `run_dioreq` at 3359 drives a dataset |
+| 3.1 | `split_into_frs` | 468 | segments a specification into requirement blocks; picks the deepest numbering level present |
+| 3.1 | `extract_elements` | 816 | the typed element extraction call, one per requirement block |
+| 3.1 | `merge_elements` | 872 | canonicalises duplicate element names across blocks |
+| 3.1 | `extract_dependency_relations` | 1067 | two-pass relation extraction: intra-requirement, then cross-requirement |
+| 3.1 | `validate_relation_items` | 1021 | rejects unknown relation types, self-loops, and unsupported edges |
+| 3.1 | `deduplicate_relations` | 1160 | collapses duplicate directed edges |
+| 3.1 | `DependencyGraphs.build` | 1469 | semantic `MultiDiGraph` plus the acyclic computational graph |
+| 3.2 | `DependencyGraphs.propagate` | 1634 | Eq. (3), forward activation in topological order with source clamping |
+| 3.2 | `DependencyGraphs.dps` | 1663 | Eq. (4), the clamped-at-1 minus clamped-at-0 difference; Eq. (5), non-negativity |
+| 3.2 | `deterministic_shortest_path` | 1205 | the Topology ranking signal |
+| 3.2 | `AllPathSupportIndex` / `maximum_geometric_path_support` | 1363 / 1412 | Eq. (8), maximum geometric-mean support over **all** admissible paths |
+| 3.2 | `rank_records` | 1775 | orders the record pool by `dps`, `extraction_support`, `topology`, `unranked` or `random` |
+| 3.3 | `nominate_dependency_findings` | 1961 | dependency-view gap nomination over the ranked budget |
+| 3.3 | `nominate_isolation_findings` | 2054 | isolation-view nomination over disconnected elements |
+| 3.3 | `nominate_operation_findings` | 2120 | operation-view nomination over `DATA` and `FUNCTION` elements |
+| 3.4 | `validate_findings` | 2225 | evidence / coverage / boundary decisions in one call per finding |
+| 3.4 | `DiagnosticFinding.eligible_for_generation` | 286 | requires `YES` / `NO` / `YES`; `UNCERTAIN` is never forwarded |
+| 3.5 | `generate_candidates` | 2366 | one reviewable requirement per eligible finding, with DPS withheld |
+| 3.5 | `consolidate_candidates` | 2449 | merge, refine, deduplicate, filter; returns KEEP / DEMOTE / REMOVE |
+| 3.5 | `numbering_context` | 2805 | detects the document's numbering dialect and last used number |
+| 3.5 | `build_refined_document` | 2862 | the terminal artefact: original text plus numbered additions |
+| 3.5 | `build_design_constraints_document` | 2918 | companions for demoted and rejected candidates |
+| 3.5 | `build_refinement_report` | 2975 | Markdown summary of the refinement pass |
+| — | `DIOReqPipeline` | 3067 | composes the five stages; `run_dioreq` at 3358 drives a dataset |
 
 The three refinement outcomes are a partition: every raw candidate identifier
 appears in exactly one of `candidates`, `design_constraints`, or
@@ -212,8 +212,7 @@ records are reviewed with `--dependency-budget`. Both have defaults, shown by
 ### RQ2 — component and diagnostic-view ablations
 
 Runs the variants reported in the paper's Table 4 by default.
-`--include-extended` adds finer-grained sub-ablations that the paper does not
-report.
+`--include-extended` adds finer-grained sub-ablations.
 
 ```bat
 python DIOReq\RQ2\rq2.py ^
@@ -224,19 +223,19 @@ python DIOReq\RQ2\rq2.py ^
 
 Variants that agree on the preparation settings
 (`cross_requirement_extraction`, `max_parents`) share one extracted graph
-within a repetition. This is not only an optimisation: an endpoint is not
-guaranteed to be deterministic even at temperature 0, so re-extracting the
-graph per variant would leave each variant comparing a different graph and
-mix the ablation effect with extraction noise. Every same-group variant is
-guaranteed to have seen the identical graph.
+within a repetition. That keeps the ablation effect separate from extraction
+noise: every same-group variant is guaranteed to have seen the identical
+graph, so a difference between them comes from the component under test.
 
 ### RQ3 — equal-budget ranking comparison
 
 Holds the document, the graph and the model settings fixed and varies only
 the ordering of the record pool. Compares `dps`, `extraction_support`,
 `topology`, `unranked` and `random` at each nominal budget. The budget is
-applied before nomination and before validation, and the reported precision
-uses Eq. (10), `VFP@B_d = valid selected records / min(B, N_d)`.
+applied before nomination and before validation. Precision uses Eq. (10),
+`VFP@B_d = valid selected records / min(B, N_d)`, with validity decided by
+the pipeline's own checks, and is written to the output as
+`auto_valid_precision`.
 
 ```bat
 python DIOReq\RQ3\rq3.py ^
@@ -317,11 +316,6 @@ list — needs a lock.
 
 ## Notes
 
-- **Endpoint determinism.** A hosted endpoint is not guaranteed to return
-  identical output for identical requests, even at temperature 0.
-  Repetitions in RQ1–RQ3 measure that variance rather than assuming it away;
-  RQ2 and RQ3 additionally keep the graph fixed within a repetition so
-  comparisons stay paired.
 - **Malformed model output.** Every field read from a model response is
   coerced rather than trusted. A `null` where a list was requested, a
   confidence reported as a percentage, or a non-object JSON response costs at
