@@ -264,8 +264,6 @@ A("- `consolidation.user.txt` receives the four pipeline switches "
   "(`merge`, `refine`, `deduplicate`, `filtering`) as booleans. That is how "
   "the RQ2 consolidation ablations change behaviour without editing the "
   "prompt text.")
-A("- Comparison-baseline prompts are intentionally absent: the released "
-  "code implements the proposed method only.")
 A("")
 A("## Scope: where the pipeline stops\n")
 A("Stage 5 ends with consolidation. The **analyst review that follows is a "

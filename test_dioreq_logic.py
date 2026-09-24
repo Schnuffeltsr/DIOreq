@@ -1182,29 +1182,42 @@ def paper_temperature_scheme():
 case("temperature scheme matches the manuscript", paper_temperature_scheme)
 
 
+def _dioreq_function_spans():
+    """
+    Map every function in ``dioreq.py`` to its ``(first, last)`` line.
+
+    Keys are the bare name and, for methods and nested classes, the
+    ``Class.method`` form too, so the documentation may cite either.
+    """
+    import ast
+
+    source = (code_paths.find_dioreq() / "dioreq.py").read_text(
+        encoding="utf-8")
+    spans = {}
+    for node in ast.walk(ast.parse(source)):
+        if isinstance(node, (ast.FunctionDef, ast.ClassDef)):
+            spans.setdefault(node.name, (node.lineno, node.end_lineno))
+        if isinstance(node, ast.ClassDef):
+            for child in node.body:
+                if isinstance(child, (ast.FunctionDef, ast.ClassDef)):
+                    spans[f"{node.name}.{child.name}"] = (
+                        child.lineno, child.end_lineno)
+    return spans
+
+
 def readme_function_lines_are_current():
     """
     The README cites a line number for every function in the stage table.
     Those numbers must still point at the real definitions, otherwise the
     map between the paper and the code silently misleads a reader.
     """
-    import ast
     import re
 
     readme = code_paths.ROOT / "README.md"
     if not readme.is_file():
         return "no README.md at the repository root (skipped)"
 
-    source = (code_paths.find_dioreq() / "dioreq.py").read_text(
-        encoding="utf-8")
-    defined = {}
-    for node in ast.walk(ast.parse(source)):
-        if isinstance(node, (ast.FunctionDef, ast.ClassDef)):
-            defined.setdefault(node.name, node.lineno)
-        if isinstance(node, ast.ClassDef):
-            for child in node.body:
-                if isinstance(child, (ast.FunctionDef, ast.ClassDef)):
-                    defined[f"{node.name}.{child.name}"] = child.lineno
+    spans = _dioreq_function_spans()
 
     row = re.compile(
         r"(?m)^\| [^|]+ \| (`[^`]+`(?: / `[^`]+`)?) \| (\d+(?: / \d+)*) \|"
@@ -1212,21 +1225,61 @@ def readme_function_lines_are_current():
     checked, stale = 0, []
     for match in row.finditer(readme.read_text(encoding="utf-8")):
         names = [n for n in re.findall(r"`([^`]+)`", match.group(1))
-                 if n in defined]
+                 if n in spans]
         numbers = [int(n) for n in match.group(2).split(" / ")]
         if len(names) != len(numbers):
             continue
         for name, cited in zip(names, numbers):
             checked += 1
-            if cited != defined[name]:
+            if cited != spans[name][0]:
                 stale.append(
-                    f"{name}: README says {cited}, def is at {defined[name]}")
+                    f"{name}: README says {cited}, def is at {spans[name][0]}")
 
     assert not stale, "; ".join(stale)
     return f"{checked} function line number(s) agree with the source"
 
 
 case("README line numbers match the source", readme_function_lines_are_current)
+
+
+def prompts_readme_call_lines_are_current():
+    """
+    ``prompts/README.md`` is generated and cites the call site of every
+    prompt. Each cited line has to fall inside the function it names, or a
+    reader lands on unrelated code.
+    """
+    import re
+
+    readme = code_paths.ROOT / "prompts" / "README.md"
+    if not readme.is_file():
+        return "no prompts/README.md (skipped)"
+
+    spans = _dioreq_function_spans()
+
+    row = re.compile(
+        r"(?m)^\| `[^`]+` \| [^|]+ \| [^|]+ \| "
+        r"`([A-Za-z_][\w.]*)\(\)` L(\d+) \|"
+    )
+    checked, stale = 0, []
+    for match in row.finditer(readme.read_text(encoding="utf-8")):
+        name, cited = match.group(1), int(match.group(2))
+        if name not in spans:
+            stale.append(f"{name}() is not a function in dioreq.py")
+            continue
+        checked += 1
+        first, last = spans[name]
+        if not first <= cited <= last:
+            stale.append(
+                f"{name}(): prompt README says L{cited}, "
+                f"{name}() spans L{first}-L{last}")
+
+    assert checked, "no prompt call sites found -- did the table format change?"
+    assert not stale, "; ".join(stale)
+    return f"{checked} prompt call site(s) fall inside the named function"
+
+
+case("prompt README call sites match the source",
+     prompts_readme_call_lines_are_current)
 
 
 def failed_run_is_recorded():

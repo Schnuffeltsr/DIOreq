@@ -11,8 +11,7 @@ document, and finally emits a *refined requirements document* in which the
 accepted supplementary requirements continue the numbering the source
 document already uses.
 
-This repository contains the proposed method and its three experiment
-runners. Comparison baselines are not included.
+This repository contains the proposed method and its three experiment runners.
 
 ---
 
